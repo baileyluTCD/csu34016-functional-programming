@@ -1,6 +1,6 @@
 { pkgs, ... }:
 pkgs.mkShell {
   packages = with pkgs; [
-    ghc
+    stack
   ];
 }
