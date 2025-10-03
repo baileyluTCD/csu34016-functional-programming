@@ -11,7 +11,7 @@ import Test.Framework as TF (
 import Test.Framework.Providers.HUnit (testCase)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.HUnit
-import Test.QuickCheck (Gen, Positive, Property, arbitrary, forAll, (.||.), (===))
+import Test.QuickCheck (Gen, Positive, Property, arbitrary, forAll, property, withMaxSuccess, (.||.), (===))
 import Test2Support
 
 main = defaultMain tests
@@ -48,7 +48,7 @@ tests =
             )
         , testProperty
             "f1 returns only numbers divisible by 390"
-            prop_f1Divisible
+            isDivisibleF1
         ]
     , testGroup
         "TEST Ex2 f2"
@@ -69,8 +69,8 @@ tests =
             ( Ex2.f2 [1 .. (354)] @?= 177 * 3
             )
         , testProperty
-            "f1 returns only numbers which are multiples of 177"
-            prop_f2Multiple
+            "f2 returns only numbers which are multiples of 177"
+            isMultipleF2
         ]
     , testGroup
         "TEST Ex2 f3"
@@ -91,25 +91,60 @@ tests =
             ( Ex2.f3 [1 .. (576)] @?= 165888
             )
         , testProperty
-            "f1 returns only numbers which are multiples of 288"
-            prop_f3Multiple
+            "f3 returns only numbers which are multiples of 288"
+            isMultipleF3
+        ]
+    , testGroup
+        "TEST Ex2 f4"
+        [ testCase
+            "fixed opcode (17) adds n (3) values"
+            (Ex2.f4 (maybeInts [17, 1, 2, 3, 4]) @?= (6, [Just 4]))
+        , testCase
+            "stop opcode (53) ends at n (16)"
+            (Ex2.f4 (maybeInts [53, 1, 2, 16, 8]) @?= (3, [Just 8]))
+        , testCase
+            "terminating opcode (16) ends with `Nothing`"
+            (Ex2.f4 [Just 16, Just 14, Nothing, Just 18] @?= (14, [Just 18]))
+        , testCase
+            "skipping opcode (89) ignores `Nothing`"
+            (Ex2.f4 [Just 89, Just 2, Nothing, Just 2] @?= (4, []))
+        , testCase
+            "value opcode (28) substitutes `Nothing` (7)"
+            (Ex2.f4 [Just 28, Just 2, Nothing] @?= (14, []))
+        , testProperty
+            "f4 returns only lists which are smaller or equal to the input"
+            ( withMaxSuccess
+                10000
+                outputListSmallerEqF4
+            )
         ]
     ]
 
+-- Properties
 -- | `f1` should return a list where every element is a multiple of 390.
-prop_f1Divisible :: [Int] -> Property
-prop_f1Divisible xs =
+isDivisibleF1 :: [Int] -> Property
+isDivisibleF1 xs =
     let result = Ex2.f1 xs
      in all (\x -> x `mod` 390 == 0) result === True
 
 -- | `f2` should return result that is a multiple of `177`.
-prop_f2Multiple :: [Int] -> Property
-prop_f2Multiple xs =
+isMultipleF2 :: [Int] -> Property
+isMultipleF2 xs =
     let result = Ex2.f2 xs
      in result `mod` 177 === 0
 
 -- | `f3` should return result that is a multiple of `288`.
-prop_f3Multiple :: [Int] -> Property
-prop_f3Multiple xs =
+isMultipleF3 :: [Int] -> Property
+isMultipleF3 xs =
     let result = Ex2.f3 xs
      in result `mod` 288 === 0 .||. result === 1
+
+-- | `f4` should return result with list smaller or equal to input.
+outputListSmallerEqF4 :: [Maybe Int] -> Property
+outputListSmallerEqF4 xs =
+    let (_, list) = Ex2.f4 xs
+     in property ((length xs) >= (length list))
+
+-- Helpers
+maybeInts :: [Int] -> [Maybe Int]
+maybeInts = fmap Just
