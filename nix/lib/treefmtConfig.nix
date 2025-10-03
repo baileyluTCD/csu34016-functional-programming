@@ -6,6 +6,6 @@ _: {
     nixfmt.enable = true;
     shfmt.enable = true;
     mdformat.enable = true;
-    stylish-haskell.enable = true;
+    fourmolu.enable = true;
   };
 }
