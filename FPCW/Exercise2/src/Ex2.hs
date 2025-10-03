@@ -77,6 +77,7 @@ f3 ns =
 
 f4 :: [Maybe Int] -> (Int, [Maybe Int]) -- DO NOT CHANGE !
 f4 [] = (0, [])
+f4 (Nothing : rest) = f4 rest
 f4 (Just x : rest) =
     let handle = handleForRest 0 rest
      in table x handle
@@ -146,6 +147,7 @@ handleForRest acc (Nothing : x : rest) operationFn operand Skip =
 handleForRest acc (Nothing : rest) operationFn operand (Value x) =
     handleForRest acc ((Just x) : rest) operationFn operand (Value x)
 -- Exit when list empty
+handleForRest acc [Nothing] _ _ _ = (acc, [])
 handleForRest acc [] _ _ _ = (acc, [])
 
 -- *** Q5 (3 marks)
@@ -165,10 +167,11 @@ f5 xs =
 -- e.g.,  helper functions, test values, etc. ...
 
 every :: Int -> [a] -> [a]
-every n _ | n <= 0 = []
-every n xs = case drop (n - 1) xs of
-    y : ys -> y : every n ys
-    [] -> []
+every n xs
+    | n <= 0 = []
+    | otherwise = case drop (n - 1) xs of
+        y : ys -> y : every n ys
+        [] -> []
 
 sum :: [Int] -> Int
 sum [] = 0
